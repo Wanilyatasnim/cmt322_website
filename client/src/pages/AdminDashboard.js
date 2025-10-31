@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { adminAPI } from '../services/api';
-import { FaTrash, FaBan, FaCheckCircle } from 'react-icons/fa';
+import { FaTrash, FaBan } from 'react-icons/fa';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('stats');
