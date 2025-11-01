@@ -63,12 +63,6 @@ const Login = () => {
         <p className="text-center mt-20">
           Don't have an account? <Link to="/register">Register here</Link>
         </p>
-        
-        <div className="alert alert-success" style={{ marginTop: '20px', fontSize: '14px' }}>
-          <strong>Admin Login:</strong><br />
-          Email: admin@2street.usm.my<br />
-          Password: admin123
-        </div>
       </div>
     </div>
   );
