@@ -66,29 +66,42 @@ const EditListing = () => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
+    const newImages = files.slice(0, 3 - existingImages.length); // Limit total to 3
+    
+    setImages(newImages);
 
-    const previews = files.map(file => URL.createObjectURL(file));
-    setImagePreviews(previews);
+    // Combine existing images with new ones for preview
+    const existingPreviews = existingImages.map(img => 
+      `${process.env.REACT_APP_API_URL || ''}/uploads/${img}`
+    );
+    const newPreviews = newImages.map(file => URL.createObjectURL(file));
+    setImagePreviews([...existingPreviews, ...newPreviews]);
   };
 
   const removeImage = (index) => {
     if (index < existingImages.length) {
       // Remove from existing images
       const newExisting = existingImages.filter((_, i) => i !== index);
-      const newPreviews = imagePreviews.filter((_, i) => i !== index);
       setExistingImages(newExisting);
-      setImagePreviews(newPreviews);
+      
+      // Rebuild previews: existing (after removal) + new images
+      const existingPreviews = newExisting.map(img => 
+        `${process.env.REACT_APP_API_URL || ''}/uploads/${img}`
+      );
+      const newPreviews = images.map(file => URL.createObjectURL(file));
+      setImagePreviews([...existingPreviews, ...newPreviews]);
     } else {
       // Remove from new images
       const newIndex = index - existingImages.length;
       const newImages = images.filter((_, i) => i !== newIndex);
       setImages(newImages);
-      const newPreviews = [...existingImages.map(img => 
+      
+      // Rebuild previews: existing + new images (after removal)
+      const existingPreviews = existingImages.map(img => 
         `${process.env.REACT_APP_API_URL || ''}/uploads/${img}`
-      ), ...newImages.map(file => URL.createObjectURL(file))];
-      newPreviews.splice(index, 1);
-      setImagePreviews(newPreviews);
+      );
+      const newPreviews = newImages.map(file => URL.createObjectURL(file));
+      setImagePreviews([...existingPreviews, ...newPreviews]);
     }
   };
 
@@ -104,6 +117,12 @@ const EditListing = () => {
         formDataToSend.append(key, formData[key]);
       });
 
+      // Send existing images to keep (if any remain)
+      if (existingImages.length > 0) {
+        formDataToSend.append('existingImages', existingImages.join(','));
+      }
+
+      // Send new images (if any)
       images.forEach((image) => {
         formDataToSend.append('images', image);
       });

@@ -145,12 +145,21 @@ router.put('/:id', verifyToken, multer.array('images', 3), async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to edit this listing' });
     }
 
-    const { title, description, price, category, condition, location } = req.body;
-    let images = listing.images;
-
-    // Update images if new ones uploaded
-    if (req.files && req.files.length > 0) {
-      images = req.files.map(file => file.filename).join(',');
+    const { title, description, price, category, condition, location, existingImages } = req.body;
+    let images = '';
+    
+    // Combine existing images (if provided) with new images
+    const existingImagesArray = existingImages ? existingImages.split(',').filter(img => img.trim()) : [];
+    const newImagesArray = req.files && req.files.length > 0 ? req.files.map(file => file.filename) : [];
+    
+    // Merge existing and new images
+    const allImages = [...existingImagesArray, ...newImagesArray];
+    
+    // If no images at all, keep the original
+    if (allImages.length === 0) {
+      images = listing.images;
+    } else {
+      images = allImages.join(',');
     }
 
     await query.run(
