@@ -11,8 +11,12 @@ router.use(verifyToken, isAdmin);
 router.get('/users', async (req, res) => {
   try {
     const users = await query.all(
-      'SELECT id, name, email, phone, matric_number, role, status, created_at FROM users ORDER BY created_at DESC'
+      'SELECT id, name, email, phone, matric_number, role, status, created_at FROM users ORDER BY id DESC'
     );
+    
+    // Debug: Log user count and IDs
+    console.log(`[Admin] Returning ${users.length} users:`, users.map(u => `${u.id}:${u.email}`).join(', '));
+    
     res.json(users);
   } catch (error) {
     console.error('Get users error:', error);
@@ -80,6 +84,9 @@ router.get('/stats', async (req, res) => {
     const activeListings = await query.get("SELECT COUNT(*) as count FROM listings WHERE status = 'active'");
     const soldListings = await query.get("SELECT COUNT(*) as count FROM listings WHERE status = 'sold'");
     
+    // Debug: Log actual counts
+    console.log(`[Admin Stats] Users: ${totalUsers.count}, Listings: ${totalListings.count}`);
+    
     res.json({
       totalUsers: totalUsers.count,
       totalListings: totalListings.count,
@@ -102,6 +109,32 @@ router.patch('/listings/:id/approve', async (req, res) => {
     res.json({ message: 'Listing approved successfully' });
   } catch (error) {
     console.error('Approve listing error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Debug endpoint: Get all users with full details (including password hash for verification)
+router.get('/debug/users', async (req, res) => {
+  try {
+    const users = await query.all('SELECT * FROM users ORDER BY id');
+    const count = await query.get('SELECT COUNT(*) as count FROM users');
+    
+    res.json({
+      totalCount: count.count,
+      users: users.map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        matric_number: u.matric_number,
+        role: u.role,
+        status: u.status,
+        created_at: u.created_at,
+        hasPassword: !!u.password
+      }))
+    });
+  } catch (error) {
+    console.error('Debug users error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
